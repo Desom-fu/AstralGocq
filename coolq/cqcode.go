@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.comcom/ProtocolScience/AstralGo/message"
+	"github.com/ProtocolScience/AstralGo/message"
 	"github.com/ProtocolScience/AstralGo/utils"
 	b14 "github.com/fumiama/go-base16384"
 	"github.com/segmentio/asm/base64"
