@@ -1070,9 +1070,21 @@ func (bot *CQBot) readImageCache(elem msg.Element, record *database.DatabaseReco
 	size := int32(record.Image.Size)
 	imageURL := bot.Client.GetDatabaseImageUrl(record.Image)
 	if imageURL != "" {
-		elem.Type = "image"
-		elem.Data = append(elem.Data, msg.Pair{K: "url", V: imageURL})
-		rsp, err = bot.makeImageOrVideoElem(elem, sourceType)
+		// 修复：创建一个只包含 URL 的新元素，以避免无限递归。
+		// 不重用旧的“elem”，因为它包含触发问题的“.image”文件路径。
+		newElem := msg.Element{
+			Type: "image",
+			Data: []msg.Pair{
+				{K: "url", V: imageURL},
+			},
+		}
+		// 从原始元素复制其他相关字段（如 flash, type 等），但排除 'file' 和 'url' 字段。
+		for _, pair := range elem.Data {
+			if pair.K != "file" && pair.K != "url" {
+				newElem.Data = append(newElem.Data, pair)
+			}
+		}
+		rsp, err = bot.makeImageOrVideoElem(newElem, sourceType)
 		if err == nil {
 			return rsp, nil
 		}
