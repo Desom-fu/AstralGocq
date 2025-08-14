@@ -25,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
-	"github.comcom/ProtocolScience/AstralGocq/db"
+	"github.com/ProtocolScience/AstralGocq/db"
 	"github.com/ProtocolScience/AstralGocq/global"
 	"github.com/ProtocolScience/AstralGocq/internal/base"
 	"github.com/ProtocolScience/AstralGocq/internal/cache"
