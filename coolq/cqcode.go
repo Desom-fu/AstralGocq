@@ -25,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
-	"github.com/ProtocolScience/AstralGocq/db"
+	"github.comcom/ProtocolScience/AstralGocq/db"
 	"github.com/ProtocolScience/AstralGocq/global"
 	"github.com/ProtocolScience/AstralGocq/internal/base"
 	"github.com/ProtocolScience/AstralGocq/internal/cache"
@@ -1070,24 +1070,26 @@ func (bot *CQBot) readImageCache(elem msg.Element, record *database.DatabaseReco
 	size := int32(record.Image.Size)
 	imageURL := bot.Client.GetDatabaseImageUrl(record.Image)
 	if imageURL != "" {
-		// 修复：创建一个只包含 URL 的新元素，以避免无限递归。
-		// 不重用旧的“elem”，因为它包含触发问题的“.image”文件路径。
-		newElem := msg.Element{
+		// START OF FIX
+		// 创建一个只包含 URL 的新元素以避免无限递归。
+		// 原始的 `elem` 仍然保留着导致循环的 `file` 属性。
+		urlElem := msg.Element{
 			Type: "image",
 			Data: []msg.Pair{
 				{K: "url", V: imageURL},
+				// 保留 "cache" 属性，因为它可能在 makeImageOrVideoElem 中被使用
+				{K: "cache", V: elem.Get("cache")},
 			},
 		}
-		// 从原始元素复制其他相关字段（如 flash, type 等），但排除 'file' 和 'url' 字段。
-		for _, pair := range elem.Data {
-			if pair.K != "file" && pair.K != "url" {
-				newElem.Data = append(newElem.Data, pair)
-			}
-		}
-		rsp, err = bot.makeImageOrVideoElem(newElem, sourceType)
+		// 尝试通过下载 URL 来创建图片元素
+		rsp, err = bot.makeImageOrVideoElem(urlElem, sourceType)
 		if err == nil {
+			// 如果成功，返回已下载的图片元素
 			return rsp, nil
 		}
+		// 如果下载失败，记录警告并继续尝试直接查询图片。
+		log.Warnf("Failed to re-download image from cached URL %s: %v. Attempting to query image directly.", imageURL, err)
+		// END OF FIX
 	}
 	switch sourceType { // nolint:exhaustive
 	case message.SourceGroup:
